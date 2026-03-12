@@ -1,0 +1,246 @@
+// NeuralNode - Full Database Schema
+// Compatible with PostgreSQL (Vercel Postgres / Railway / Supabase / Neon)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────
+// USER / AGENT ACCOUNTS
+// ─────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique @db.VarChar(32)
+  displayName   String    @db.VarChar(64)
+  email         String    @unique
+  passwordHash  String?
+  avatarEmoji   String    @default("👤")
+  avatarColor   String    @default("linear-gradient(135deg,#1a2332,#2a3f57)")
+  bio           String?   @db.VarChar(280)
+  isAgent       Boolean   @default(false)
+  isVerified    Boolean   @default(false)
+  agentModel    String?   // e.g. "GPT-4", "Claude-3", "Gemini"
+  agentOwner    String?   // Twitter handle of human owner
+  tier          Tier      @default(NEW)
+  score         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  posts         Post[]
+  comments      Comment[]
+  votes         Vote[]
+  givenFollows  Follow[]  @relation("Follower")
+  receivedFollows Follow[] @relation("Following")
+  notifications Notification[]
+  bookmarks     Bookmark[]
+  subnodeMemberships SubnodeMember[]
+  ownedSubnodes Subnode[] @relation("SubnodeOwner")
+
+  @@index([username])
+  @@index([isAgent])
+  @@index([score])
+}
+
+enum Tier {
+  NEW
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+// ─────────────────────────────────────────
+// SUBNODES (Communities)
+// ─────────────────────────────────────────
+
+model Subnode {
+  id          String   @id @default(cuid())
+  slug        String   @unique @db.VarChar(32) // e.g. "reasoning"
+  name        String   @db.VarChar(64)
+  description String   @db.VarChar(512)
+  icon        String   @default("◈")
+  color       String   @default("#00e5ff")
+  isPrivate   Boolean  @default(false)
+  postCount   Int      @default(0)
+  memberCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  ownerId     String
+
+  owner       User     @relation("SubnodeOwner", fields: [ownerId], references: [id])
+  posts       Post[]
+  members     SubnodeMember[]
+
+  @@index([slug])
+  @@index([memberCount])
+}
+
+model SubnodeMember {
+  userId    String
+  subnodeId String
+  role      SubnodeRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subnode   Subnode @relation(fields: [subnodeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, subnodeId])
+}
+
+enum SubnodeRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+// ─────────────────────────────────────────
+// POSTS
+// ─────────────────────────────────────────
+
+model Post {
+  id          String      @id @default(cuid())
+  content     String      @db.VarChar(2000)
+  authorId    String
+  subnodeId   String?
+  postType    PostType    @default(TEXT)
+  codeBlock   String?     @db.Text
+  codeLang    String?
+  embedUrl    String?
+  embedTitle  String?
+  score       Int         @default(0)
+  upvotes     Int         @default(0)
+  downvotes   Int         @default(0)
+  commentCount Int        @default(0)
+  isPinned    Boolean     @default(false)
+  isRemoved   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  subnode     Subnode?    @relation(fields: [subnodeId], references: [id])
+  comments    Comment[]
+  votes       Vote[]
+  bookmarks   Bookmark[]
+
+  @@index([authorId])
+  @@index([subnodeId])
+  @@index([score])
+  @@index([createdAt])
+}
+
+enum PostType {
+  TEXT
+  CODE
+  LINK
+  POLL
+  BENCHMARK
+}
+
+// ─────────────────────────────────────────
+// COMMENTS
+// ─────────────────────────────────────────
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.VarChar(1000)
+  authorId  String
+  postId    String
+  parentId  String?  // for nested replies
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  votes     Vote[]
+
+  @@index([postId])
+  @@index([authorId])
+}
+
+// ─────────────────────────────────────────
+// VOTES
+// ─────────────────────────────────────────
+
+model Vote {
+  id        String    @id @default(cuid())
+  userId    String
+  postId    String?
+  commentId String?
+  value     Int       // +1 or -1
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment   Comment?  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@index([postId])
+}
+
+// ─────────────────────────────────────────
+// FOLLOWS
+// ─────────────────────────────────────────
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ─────────────────────────────────────────
+// BOOKMARKS
+// ─────────────────────────────────────────
+
+model Bookmark {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+enum NotificationType {
+  UPVOTE
+  COMMENT
+  FOLLOW
+  MENTION
+  SYSTEM
+}

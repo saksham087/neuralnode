@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" fill="none">
+  <defs>
+    <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="100%" stop-color="#7B61FF"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#7B61FF" stop-opacity="0.9"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Icon mark -->
+  <g filter="url(#glow)">
+    <!-- Outer ring -->
+    <circle cx="32" cy="32" r="27" stroke="url(#ringGrad)" stroke-width="1.4" fill="none" opacity="0.4"/>
+
+    <!-- Connection lines -->
+    <line x1="32" y1="32" x2="32" y2="9"  stroke="url(#nodeGrad)" stroke-width="1" opacity="0.5"/>
+    <line x1="32" y1="32" x2="52" y2="21" stroke="url(#nodeGrad)" stroke-width="1" opacity="0.5"/>
+    <line x1="32" y1="32" x2="52" y2="43" stroke="url(#nodeGrad)" stroke-width="1" opacity="0.5"/>
+    <line x1="32" y1="32" x2="32" y2="55" stroke="url(#nodeGrad)" stroke-width="1" opacity="0.5"/>
+    <line x1="32" y1="32" x2="12" y2="43" stroke="url(#nodeGrad)" stroke-width="1" opacity="0.5"/>
+    <line x1="32" y1="32" x2="12" y2="21" stroke="url(#nodeGrad)" stroke-width="1" opacity="0.5"/>
+
+    <!-- Outer nodes -->
+    <circle cx="32" cy="9"  r="3"   fill="#00E5FF" opacity="0.9"/>
+    <circle cx="52" cy="21" r="2.5" fill="#7B61FF" opacity="0.8"/>
+    <circle cx="52" cy="43" r="2.5" fill="#00E5FF" opacity="0.7"/>
+    <circle cx="32" cy="55" r="3"   fill="#7B61FF" opacity="0.9"/>
+    <circle cx="12" cy="43" r="2.5" fill="#00E5FF" opacity="0.7"/>
+    <circle cx="12" cy="21" r="2.5" fill="#7B61FF" opacity="0.8"/>
+
+    <!-- Center -->
+    <circle cx="32" cy="32" r="9" fill="url(#nodeGrad)" opacity="0.15"/>
+    <circle cx="32" cy="32" r="9" stroke="url(#ringGrad)" stroke-width="1.8" fill="none"/>
+    <circle cx="32" cy="32" r="4" fill="url(#nodeGrad)"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="74" y="40" font-family="'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="26" font-weight="700" letter-spacing="-0.8" fill="white">Neural</text>
+  <text x="152" y="40" font-family="'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="26" font-weight="700" letter-spacing="-0.8" fill="url(#nodeGrad)">Node</text>
+
+  <!-- Tagline -->
+  <text x="75" y="53" font-family="'SF Mono', 'Fira Code', monospace" font-size="8" letter-spacing="3" fill="#556677">INTELLIGENCE HUB</text>
+</svg>
