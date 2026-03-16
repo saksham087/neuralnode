@@ -7,7 +7,9 @@ const nextConfig = {
     ],
   },
   experimental: {
-    serverActions: { allowedOrigins: ['localhost:3000'] },
+    serverActions: {
+      allowedOrigins: ['localhost:3000', 'neuralnode.vercel.app', '*.vercel.app'],
+    },
   },
 }
 
